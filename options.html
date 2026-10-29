@@ -1,485 +1,267 @@
 <!DOCTYPE html>
-<html>
+<html class="light" lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Skyscraper City Forum Opener Options</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Skyscraper City Helper - Rule Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Work+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="tailwind-built.css"/>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        body { font-family: 'Work Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
         }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 100%);
-            color: #f1f5f9;
-            min-height: 100vh;
-            padding: 40px 20px;
+        .structural-grid {
+            background-image: radial-gradient(circle, #8c7166 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.05;
         }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 32px;
+        .card-elevation {
+            box-shadow: 0 4px 6px -1px rgba(158, 61, 0, 0.1), 0 2px 4px -1px rgba(158, 61, 0, 0.06);
         }
-
-        header {
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 24px;
-        }
-
-        header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(to right, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
-
-        header p {
-            color: #94a3b8;
-            font-size: 14px;
-        }
-
-        .sections-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        @media (max-width: 768px) {
-            .sections-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .card h2 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #38bdf8;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding-bottom: 10px;
-        }
-
-        .card p {
-            color: #94a3b8;
-            font-size: 13px;
-            line-height: 1.4;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        label {
-            font-size: 13px;
-            font-weight: 500;
-            color: #cbd5e1;
-        }
-
-        input[type="text"], textarea {
-            width: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid #334155;
-            color: #f8fafc;
-            border-radius: 8px;
-            padding: 10px 12px;
-            font-family: inherit;
-            font-size: 13px;
-            transition: all 0.2s ease;
-            outline: none;
-        }
-
-        input[type="text"]:focus, textarea:focus {
-            border-color: #38bdf8;
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
-            background: rgba(15, 23, 42, 0.8);
-        }
-
-        textarea {
-            height: 100px;
-            resize: vertical;
-        }
-
-        button {
-            padding: 12px 20px;
-            font-family: inherit;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(6, 182, 212, 0.35);
-            filter: brightness(1.05);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        /* Rules List */
-        .rules-list-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 250px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-
-        /* Custom Scrollbar */
-        .rules-list-container::-webkit-scrollbar {
-            width: 6px;
-        }
-        .rules-list-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 3px;
-        }
-        .rules-list-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 3px;
-        }
-        .rules-list-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .rules-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #e2e8f0;
-            margin-top: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding-bottom: 6px;
-        }
-
-        .rule {
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 12px 14px;
+        .active-beam {
             position: relative;
-            font-size: 13px;
-            line-height: 1.5;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
         }
-
-        .rule-page-url {
-            color: #38bdf8;
-            font-weight: 600;
-            word-break: break-all;
-            padding-right: 28px;
-        }
-
-        .rule-subforums {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            color: #94a3b8;
-            font-family: monospace;
-            background: rgba(0, 0, 0, 0.15);
-            padding: 6px 8px;
-            border-radius: 4px;
-            margin-top: 4px;
-            font-size: 11px;
-        }
-
-        .delete-subforum-rule, .delete-thread-rule {
+        .active-beam::before {
+            content: '';
             position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 24px;
-            height: 24px;
-            padding: 0;
-            background: rgba(239, 68, 68, 0.1);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            left: 0;
+            top: 25%;
+            bottom: 25%;
+            width: 4px;
+            background-color: #fc8f34;
+            border-radius: 0 4px 4px 0;
         }
-
-        .delete-subforum-rule:hover, .delete-thread-rule:hover {
-            background: rgba(239, 68, 68, 0.25);
-            border-color: #f87171;
-            color: #ffffff;
-            transform: scale(1.1);
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
         }
-
-        /* Status Banner */
-        #status {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            background: rgba(16, 185, 129, 0.95);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #ffffff;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e0c0b2;
+            border-radius: 10px;
+        }
+        
+        /* Tab active state styles from design system */
+        #tabBtnDashboard.active, #tabBtnCreate.active {
+            background-color: rgba(158, 61, 0, 0.1); /* primary-container/10 */
+            color: #9e3d00; /* primary */
+            border-color: #fc8f34; /* secondary-container */
             font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
         }
-
-        #status:not(:empty) {
-            opacity: 1;
-            transform: translateY(0);
+        .tab-content {
+            display: none !important;
         }
-
-        /* --- Interactive Builder Styles --- */
-        .builder-checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 12px;
-            margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.15);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .builder-checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 6px 8px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-        }
-
-        .builder-checkbox-label:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .builder-checkbox-label input {
-            cursor: pointer;
-        }
-
-        .preview-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 220px;
-            overflow-y: auto;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.15);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .preview-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-        }
-
-        .preview-item.open {
-            background: rgba(16, 185, 129, 0.06);
-            border-color: rgba(16, 185, 129, 0.15);
-        }
-
-        .preview-item.ignore {
-            background: rgba(239, 68, 68, 0.04);
-            border-color: rgba(239, 68, 68, 0.1);
-            opacity: 0.7;
-        }
-
-        .preview-title {
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            margin-right: 12px;
-            color: var(--text-primary);
-        }
-
-        .preview-badge {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-
-        .preview-badge.open {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-        }
-
-        .preview-badge.ignore {
-            background: rgba(148, 163, 184, 0.2);
-            color: #94a3b8;
-        }
-
-        .builder-bulk-actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 11px;
-            font-weight: 600;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-primary);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-small:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .btn-small:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-            pointer-events: none;
+        .tab-content.active {
+            display: block !important;
         }
     </style>
     <script src="options.js"></script>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🏙️ Skyscraper City Opener Settings</h1>
-            <p>Define rules for scanning specific forum sections and thread listings.</p>
-        </header>
+<body class="bg-background text-on-background min-h-screen">
+    <!-- Desktop Navigation Shell -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation Drawer -->
+        <aside class="fixed left-0 top-0 h-screen w-72 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col p-lg">
+            <div class="flex items-center gap-sm mb-xl">
+                <span class="material-symbols-outlined text-primary text-[32px]" style="font-variation-settings: 'FILL' 1;">location_city</span>
+                <h1 class="font-headline-md text-headline-md font-extrabold text-primary tracking-tight">Skyscraper Helper</h1>
+            </div>
+            <nav class="flex flex-col gap-xs flex-grow">
+                <button class="active flex items-center gap-md text-on-surface-variant hover:bg-surface-container-high px-md py-sm rounded-lg transition-all duration-200 text-left w-full border-l-4 border-transparent" id="tabBtnDashboard">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="font-body-md font-medium">Rules Dashboard</span>
+                </button>
+                <button class="flex items-center gap-md text-on-surface-variant hover:bg-surface-container-high px-md py-sm rounded-lg transition-all duration-200 text-left w-full border-l-4 border-transparent" id="tabBtnCreate">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    <span class="font-body-md font-medium">Create New Rule</span>
+                </button>
+            </nav>
+            <div class="mt-auto space-y-md">
+                <div class="bg-surface-container-low p-md rounded-xl border border-outline-variant/20">
+                    <div class="flex items-center justify-between mb-xs">
+                        <span class="text-label-caps font-label-caps text-on-surface-variant/60">SYSTEM VERSION</span>
+                        <span class="text-primary font-bold">v2.4.1</span>
+                    </div>
+                    <div class="w-full bg-outline-variant/30 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full" style="width: 100%"></div>
+                    </div>
+                </div>
+                <p class="font-label-caps text-[10px] text-on-surface-variant/50 text-center">District 09-ED • District 09-ED</p>
+            </div>
+        </aside>
 
-        <!-- Interactive Builder Container -->
-        <div id="interactiveBuilder" class="card" style="display: none;">
-            <h2 style="color: #818cf8;">🛠️ Interactive Rule Builder</h2>
-            <p style="margin-bottom: 4px;">Configuring rules based on page: <a id="builderPageUrl" href="#" target="_blank" style="color: #38bdf8; font-weight: 600; word-break: break-all; text-decoration: none;"></a></p>
+        <!-- Main Content Area -->
+        <main class="ml-72 flex-grow min-h-screen relative overflow-x-hidden">
+            <!-- Structural Backdrop -->
+            <div class="fixed inset-0 structural-grid pointer-events-none"></div>
             
-            <div id="builderContent" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
-                <!-- Dynamically populated -->
+            <!-- Dashboard Content Section -->
+            <div id="tabContentDashboard" class="tab-content active space-y-xl">
+                <!-- Page Header & Filter Row -->
+                <header class="sticky top-0 bg-background/80 backdrop-blur-md z-40 border-b border-outline-variant/20 px-xl py-lg">
+                    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-md">
+                        <div>
+                            <h2 class="font-headline-lg text-headline-lg text-on-background">Rule Management</h2>
+                            <p class="text-on-surface-variant font-body-md">Organize your automated scraping and notification hierarchy.</p>
+                        </div>
+                        <div class="flex items-center gap-sm bg-surface-container-lowest p-xs rounded-xl shadow-sm border border-outline-variant/30">
+                            <div class="relative flex-grow min-w-[280px]">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+                                <input class="w-full pl-10 pr-4 py-2 bg-transparent border-none focus:ring-0 text-body-md" id="dashboardSearch" placeholder="Search rules, URLs, or friendly names..." type="text"/>
+                            </div>
+                            <div class="h-8 w-px bg-outline-variant/30"></div>
+                            <select class="bg-transparent border-none focus:ring-0 text-button-text font-button-text text-primary cursor-pointer pr-10" id="dashboardTypeFilter">
+                                <option value="all">All Types</option>
+                                <option value="subforums">Folder Rules (Subforums)</option>
+                                <option value="threads">List Rules (Threads)</option>
+                            </select>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="max-w-7xl mx-auto px-xl py-xl space-y-xl relative z-10">
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-xl items-start">
+                        <!-- LEFT COLUMN: Active Rules Management -->
+                        <div class="xl:col-span-7 space-y-lg">
+                            <h3 class="font-label-caps text-label-caps text-on-surface-variant/70 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">lists</span>
+                                ACTIVE WATCH RULES
+                            </h3>
+                            
+                            <!-- Hidden list containers kept for compatibility -->
+                            <div id="subforumRulesList" style="display: none;"></div>
+                            <div id="threadRulesList" style="display: none;"></div>
+
+                            <!-- Rules Card Container -->
+                            <div id="dashboardGrid" class="grid grid-cols-1 gap-md">
+                                <!-- Dynamically populated cards -->
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: Interactive Builder Area -->
+                        <div class="xl:col-span-5 space-y-xl">
+                            <!-- Interactive Rule Builder -->
+                            <div id="interactiveBuilder" class="bg-surface-container-lowest rounded-[2rem] p-lg border border-outline-variant/30 card-elevation space-y-lg" style="display: none;">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
+                                            <span class="material-symbols-outlined text-[20px]">construction</span>
+                                        </div>
+                                        <h3 class="font-headline-md text-headline-md text-on-background">Live Builder</h3>
+                                    </div>
+                                    <span class="flex items-center gap-1 text-[10px] font-label-caps bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full font-bold">URL PRELOADED</span>
+                                </div>
+                                <div class="px-md py-2.5 bg-surface-container-low rounded-xl border border-dashed border-outline-variant flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-primary text-sm">link</span>
+                                    <a id="builderPageUrl" href="#" target="_blank" class="text-[12px] font-body-md text-primary truncate hover:underline"></a>
+                                </div>
+                                
+                                <div id="builderContent" class="space-y-md">
+                                    <!-- Dynamically populated checkboxes and sequencing lists -->
+                                </div>
+                                
+                                <button id="saveBuilderRuleButton" class="w-full bg-primary text-on-primary font-button-text py-4 rounded-xl hover:bg-on-primary-fixed-variant transition-all shadow-lg active:scale-[0.98] transform flex items-center justify-center gap-3">
+                                    <span class="material-symbols-outlined">save</span>
+                                    <span>SAVE & APPLY RULE</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <button id="saveBuilderRuleButton" class="btn-primary" style="margin-top: 16px; width: 100%;">
-                Save & Apply Rule
-            </button>
-        </div>
 
-        <div class="sections-grid">
-            <!-- Subforum Rules Section -->
-            <div class="card">
-                <h2>📁 Subforum Rules</h2>
-                <p>Rules applied to multi-subforum index pages. Filters matches and marks the rest read.</p>
-                
-                <div id="add-subforum-rule-form">
-                    <div class="form-group">
-                        <label for="subforumPageUrl">Forum Page URL:</label>
-                        <input type="text" id="subforumPageUrl" placeholder="e.g., https://www.skyscrapercity.com/forums/ozscrapers.65/">
+            <!-- Create New Rule Section -->
+            <div id="tabContentCreate" class="tab-content space-y-xl">
+                <header class="sticky top-0 bg-background/80 backdrop-blur-md z-40 border-b border-outline-variant/20 px-xl py-lg">
+                    <div class="max-w-7xl mx-auto">
+                        <h2 class="font-headline-lg text-headline-lg text-on-background">Create New Rule</h2>
+                        <p class="text-on-surface-variant font-body-md">Manually define scraping boundaries for a specific subforum or discussion list.</p>
                     </div>
-                    
-                    <div class="form-group" style="margin-top: 12px;">
-                        <label for="customSubforums">Subforum URLs to Open (one per line):</label>
-                        <textarea id="customSubforums" placeholder="Enter target subforum URLs to scan and open."></textarea>
-                    </div>
-                    
-                    <button id="addSubforumRuleButton" class="btn-primary" style="margin-top: 16px; width: 100%;">
-                        Save Subforum Rule
-                    </button>
-                </div>
+                </header>
 
-                <div class="rules-title">Saved Rules</div>
-                <div id="subforumRulesList" class="rules-list-container">
-                    <!-- Dynamic Rules -->
+                <div class="max-w-7xl mx-auto px-xl py-xl relative z-10">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-xl items-start">
+                        <!-- Subforum Creator Form -->
+                        <div id="subforumCreatorCard" class="bg-surface-container rounded-[2rem] p-lg border border-primary/10 relative overflow-hidden shadow-lg transition-all duration-300">
+                            <div class="absolute -top-6 -right-6 p-10 opacity-5 pointer-events-none">
+                                <span class="material-symbols-outlined text-[120px] text-primary">folder</span>
+                            </div>
+                            <div class="flex items-center gap-3 mb-lg">
+                                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+                                    <span class="material-symbols-outlined">folder_open</span>
+                                </div>
+                                <h3 class="font-headline-md text-headline-md text-primary">Subforum Creator</h3>
+                            </div>
+                            <div class="space-y-lg" id="add-subforum-rule-form">
+                                <div class="space-y-xs">
+                                    <label class="font-label-caps text-[11px] text-on-surface-variant ml-1 font-bold">FORUM INDEX PAGE URL</label>
+                                    <input id="subforumPageUrl" class="w-full bg-surface-container-lowest border-none border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-xl px-md py-3 text-body-md transition-all shadow-sm" placeholder="https://www.skyscrapercity.com/forums/ozscrapers.65/" type="text"/>
+                                </div>
+                                <div class="space-y-xs">
+                                    <label class="font-label-caps text-[11px] text-on-surface-variant ml-1 font-bold">OPENING ORDER</label>
+                                    <select id="subforumOrderMode" class="w-full bg-surface-container-lowest border-none border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-xl px-md py-3 text-body-md transition-all shadow-sm cursor-pointer">
+                                        <option value="custom">Specific Order (sequence listed below)</option>
+                                        <option value="bottomToTop">Bottom to Top (page order)</option>
+                                        <option value="topToBottom">Top to Bottom (page order)</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-xs">
+                                    <label class="font-label-caps text-[11px] text-on-surface-variant ml-1 font-bold">TARGET SUBFORUMS TO WATCH (ONE PER LINE)</label>
+                                    <textarea id="customSubforums" class="w-full bg-surface-container-lowest border-none border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-xl px-md py-sm text-body-md transition-all shadow-sm font-mono text-[12px] custom-scrollbar" placeholder="Paste child subforum URLs (e.g. transport.297)..." rows="4"></textarea>
+                                </div>
+                                <button id="addSubforumRuleButton" class="w-full bg-primary text-on-primary font-button-text py-4 rounded-xl hover:bg-on-primary-fixed-variant transition-all shadow-lg active:scale-[0.98] transform flex items-center justify-center gap-3">
+                                    <span class="material-symbols-outlined">save</span>
+                                    <span>SAVE SUBFORUM RULE</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Thread Creator Form -->
+                        <div id="threadCreatorCard" class="bg-surface-container rounded-[2rem] p-lg border border-primary/10 relative overflow-hidden shadow-lg transition-all duration-300">
+                            <div class="absolute -top-6 -right-6 p-10 opacity-5 pointer-events-none">
+                                <span class="material-symbols-outlined text-[120px] text-primary">chat</span>
+                            </div>
+                            <div class="flex items-center gap-3 mb-lg">
+                                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+                                    <span class="material-symbols-outlined">chat_bubble</span>
+                                </div>
+                                <h3 class="font-headline-md text-headline-md text-primary">Thread Creator</h3>
+                            </div>
+                            <div class="space-y-lg" id="add-thread-rule-form">
+                                <div class="space-y-xs">
+                                    <label class="font-label-caps text-[11px] text-on-surface-variant ml-1 font-bold">SUBFORUM THREAD LIST URL</label>
+                                    <input id="threadPageUrl" class="w-full bg-surface-container-lowest border-none border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-xl px-md py-3 text-body-md transition-all shadow-sm" placeholder="https://www.skyscrapercity.com/forums/sydney-cbd.4057/" type="text"/>
+                                </div>
+                                <div class="space-y-xs">
+                                    <label class="font-label-caps text-[11px] text-on-surface-variant ml-1 font-bold">OPENING ORDER</label>
+                                    <select id="threadOrderMode" class="w-full bg-surface-container-lowest border-none border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-xl px-md py-3 text-body-md transition-all shadow-sm cursor-pointer">
+                                        <option value="custom">Specific Order (sequence listed below)</option>
+                                        <option value="bottomToTop">Bottom to Top (page order)</option>
+                                        <option value="topToBottom">Top to Bottom (page order)</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-xs">
+                                    <label class="font-label-caps text-[11px] text-on-surface-variant ml-1 font-bold">TARGET THREADS TO WATCH (ONE PER LINE)</label>
+                                    <textarea id="customThreads" class="w-full bg-surface-container-lowest border-none border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-xl px-md py-sm text-body-md transition-all shadow-sm font-mono text-[12px] custom-scrollbar" placeholder="Paste target thread URLs (e.g. sydney-airport.460346)..." rows="4"></textarea>
+                                </div>
+                                <button id="addThreadRuleButton" class="w-full bg-primary text-on-primary font-button-text py-4 rounded-xl hover:bg-on-primary-fixed-variant transition-all shadow-lg active:scale-[0.98] transform flex items-center justify-center gap-3">
+                                    <span class="material-symbols-outlined">save</span>
+                                    <span>SAVE THREAD RULE</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Thread Rules Section -->
-            <div class="card">
-                <h2>📝 Thread Rules</h2>
-                <p>Rules applied to thread list views in a single subforum. Filters matches and marks the rest read in a custom sequence.</p>
-                
-                <div id="add-thread-rule-form">
-                    <div class="form-group">
-                        <label for="threadPageUrl">Subforum Page URL:</label>
-                        <input type="text" id="threadPageUrl" placeholder="e.g., https://www.skyscrapercity.com/forums/sydney-cbd.4057/">
-                    </div>
-
-                    <div class="form-group" style="margin-top: 12px;">
-                        <label for="customThreads">Thread URLs to Open (one per line):</label>
-                        <textarea id="customThreads" placeholder="Enter target thread URLs to scan and open."></textarea>
-                    </div>
-                    
-                    <button id="addThreadRuleButton" class="btn-primary" style="margin-top: 16px; width: 100%;">
-                        Save Thread Rule
-                    </button>
-                </div>
-
-                <div class="rules-title">Saved Rules</div>
-                <div id="threadRulesList" class="rules-list-container">
-                    <!-- Dynamic Rules -->
-                </div>
-            </div>
-        </div>
+        </main>
     </div>
 
     <!-- Notification Toast -->
-    <div id="status"></div>
+    <div id="status" class="fixed bottom-5 right-5 z-[100] px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 text-white font-bold font-body-md max-w-sm pointer-events-none empty:hidden"></div>
 </body>
 </html>

@@ -1,190 +1,143 @@
 <!DOCTYPE html>
-<html>
+<html class="light" lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Skyscraper City Forum Opener</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Skyscraper City Helper</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="tailwind-built.css"/>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            width: 320px;
-            padding: 20px;
-            font-family: 'Outfit', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            width: 360px;
+            min-height: 520px;
+            overflow-x: hidden;
+            background-color: #f7f9ff;
+            background-image: 
+                radial-gradient(#091d2e 0.5px, transparent 0.5px),
+                radial-gradient(#091d2e 0.5px, #f7f9ff 0.5px);
+            background-size: 24px 24px;
+            background-position: 0 0, 12px 12px;
+            background-attachment: fixed;
+            background-opacity: 0.05;
         }
 
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-bottom: 4px;
+        .blueprint-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(9, 29, 46, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(9, 29, 46, 0.03) 1px, transparent 1px);
+            background-size: 8px 8px;
+            z-index: -1;
         }
 
-        .header h1 {
-            font-size: 16px;
-            font-weight: 700;
-            background: linear-gradient(to right, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.025em;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 
-        .header-logo {
-            font-size: 20px;
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #9e3d00;
+            display: inline-block;
+            margin-right: 8px;
         }
 
-        button {
-            width: 100%;
-            padding: 12px 16px;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            outline: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+        .status-dot.active {
+            animation: pulse 1.5s infinite;
         }
 
-        /* Primary Button */
-        #openAllUnread {
-            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-            color: #ffffff;
-            border: none;
-            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.5; }
         }
 
-        #openAllUnread:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(6, 182, 212, 0.45);
-            filter: brightness(1.1);
-        }
-
-        #openAllUnread:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        #openAllUnread:disabled {
-            background: #334155;
-            color: #64748b;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        /* Secondary Button */
-        #addRuleForPage {
-            background: rgba(30, 41, 59, 0.6);
-            color: #e2e8f0;
-            border: 1px solid #475569;
-        }
-
-        #addRuleForPage:hover:not(:disabled) {
-            background: rgba(51, 65, 85, 0.8);
-            border-color: #64748b;
-            color: #ffffff;
-            transform: translateY(-1px);
-        }
-
-        #addRuleForPage:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Status Display Pill */
-        #status {
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 500;
-            line-height: 1.4;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        #status.info {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.25);
-            color: #93c5fd;
-        }
-
-        #status.success {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            color: #a7f3d0;
-            animation: pulse-success 1.5s infinite alternate;
-        }
-
-        #status.error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.25);
-            color: #fca5a5;
-        }
-
-        /* Pulsing keyframes for Scanning status */
-        @keyframes pulse-success {
-            0% { box-shadow: 0 0 4px rgba(16, 185, 129, 0.1); }
-            100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
-        }
-
-        .options-link-container {
-            text-align: center;
-            margin-top: 4px;
-        }
-
-        .options-link {
-            font-size: 13px;
-            font-weight: 500;
-            color: #94a3b8;
-            text-decoration: none;
-            transition: color 0.2s ease, border-bottom 0.2s ease;
-            border-bottom: 1px solid transparent;
-            padding-bottom: 2px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .options-link:hover {
-            color: #38bdf8;
-            border-bottom-color: #38bdf8;
+        .staircase-progress {
+            border-left: 2px solid rgba(158, 61, 0, 0.15);
+            margin-left: 11px;
         }
     </style>
-    <script src="popup.js"></script>
 </head>
-<body>
-    <div class="header">
-        <span class="header-logo">🏙️</span>
-        <h1>Skyscraper City Opener</h1>
-    </div>
+<body class="font-body-md text-on-surface p-0 m-0 relative">
+    <div class="blueprint-grid"></div>
     
-    <button id="openAllUnread">
-        <span>⚡</span> Open Unread Links
-    </button>
+    <!-- Header Section (TopAppBar) -->
+    <header class="bg-surface/90 backdrop-blur-md sticky top-0 z-50 flex justify-between items-center px-md h-16 w-full border-b border-on-surface/10 shadow-sm">
+        <div class="flex items-center gap-sm">
+            <span class="material-symbols-outlined text-primary font-headline-md text-headline-md" style="font-variation-settings: 'FILL' 1;">location_city</span>
+            <h1 class="font-headline-md text-headline-md font-bold text-primary">Skyscraper Helper</h1>
+        </div>
+        <button class="material-symbols-outlined text-primary hover:bg-primary-container/10 transition-colors p-sm rounded-lg active:scale-95 transition-transform" id="popupSettingsBtn" title="Settings">settings</button>
+    </header>
     
-    <div id="status" class="info">Initializing...</div>
+    <main class="px-md py-lg space-y-lg relative">
+        <!-- Hero Action Area -->
+        <section class="space-y-sm">
+            <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-primary to-secondary-container rounded-xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <button class="relative w-full py-lg px-lg bg-primary text-on-primary rounded-xl shadow-lg hover:bg-primary-container transition-all flex flex-col items-center justify-center gap-xs active:scale-[0.98] disabled:bg-surface-variant disabled:text-on-surface-variant disabled:pointer-events-none disabled:shadow-none" id="openLinksBtn">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">table</span>
+                        <span class="font-button-text text-base uppercase tracking-wider">Open Unread Links</span>
+                    </div>
+                    <span class="font-label-caps text-[11px] text-on-primary/75" id="unreadCountLabel">Ready to Scan Page</span>
+                </button>
+            </div>
+
+            <button class="w-full py-md px-md bg-secondary-container/20 hover:bg-secondary-container/35 border border-secondary-container/60 text-primary rounded-xl shadow-sm transition-all flex items-center justify-between gap-sm active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none group" id="expandAllBtn" title="Deep-scan unread subforums in your saved order and open all subforums + unread threads in hierarchy order">
+                <div class="flex items-center gap-sm text-left">
+                    <span class="material-symbols-outlined text-2xl text-primary" style="font-variation-settings: 'FILL' 1;">account_tree</span>
+                    <div>
+                        <div class="font-button-text text-sm uppercase tracking-wider font-bold text-primary">Expand &amp; Open All</div>
+                        <div class="font-label-caps text-[10px] text-on-surface-variant/80" id="expandAllLabel">Open Subforums + Threads in Hierarchy</div>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined text-primary group-hover:translate-x-0.5 transition-transform">unfold_more_double</span>
+            </button>
+        </section>
+        
+        <!-- Real-time Status Display -->
+        <section class="bg-surface-container-low border border-on-surface/5 rounded-xl p-md shadow-md">
+            <div class="flex items-center justify-between mb-md border-b border-on-surface/5 pb-xs">
+                <h3 class="font-label-caps text-on-surface-variant">Execution Pipeline</h3>
+                <span class="hidden px-2 py-0.5 rounded-full bg-secondary-container/25 text-primary text-[10px] font-label-caps font-bold" id="queueBadge"></span>
+            </div>
+            <div class="staircase-progress space-y-md" id="pipeline">
+                <!-- Dynamically populated steps -->
+            </div>
+        </section>
+        
+        <!-- Contextual Tools Area -->
+        <section class="grid grid-cols-1 gap-sm">
+            <button class="w-full flex items-center justify-between px-md py-sm bg-surface-container rounded-lg border border-on-surface/5 hover:bg-surface-container-high transition-all active:scale-95 group disabled:opacity-40 disabled:pointer-events-none" id="addRuleForPage">
+                <div class="flex items-center gap-md text-on-secondary-container">
+                    <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">rule</span>
+                    <span class="font-button-text text-secondary">Edit Rules for Page</span>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+            </button>
+            
+            <div class="relative w-full h-24 rounded-xl overflow-hidden shadow-inner border border-on-surface/10 mt-sm">
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCdd5w1TQiK7boIfZ6d4XSiZo4BYgHslZ8r52xRhgEf0Mg72eVTlr8r4gCk0aoHvp2QGtb7L_Oux4cLULvHYT_gZ0TwtzlLfbEaLOFl5G1_naMj5Nb9MTPn_OAbWSl7shFKHT2UhmJHChrEvAYJw1J9hJwkwMxuOg3qD3BeIxlUOnQIhc_HXsMVXMOXS24VzGOWkUcHdon-S3IN1h0yI08r3U72x1BG6wfOn-n8q8E4A36oNsuPlx7Z')"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+                <div class="absolute bottom-2 left-3">
+                    <span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Active Site: skyscrapercity.com</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer / Global Actions -->
+        <footer class="flex flex-col items-center gap-xs pt-md border-t border-on-surface/5">
+            <a class="font-label-caps text-primary hover:text-on-secondary-fixed-variant transition-colors flex items-center gap-xs group" href="options.html" id="configureAllRules">
+                <span class="material-symbols-outlined text-sm group-hover:rotate-45 transition-transform">settings_applications</span>
+                Configure All Rules
+            </a>
+            <p class="font-label-caps text-[10px] text-on-surface-variant/50">Build v2.4.1 • District 09-ED</p>
+        </footer>
+    </main>
     
-    <button id="addRuleForPage">
-        <span>⚙️</span> Edit Rules for Page
-    </button>
-    
-    <div class="options-link-container">
-        <a class="options-link" href="options.html" target="_blank">
-            Configure All Rules →
-        </a>
-    </div>
+    <script src="popup.js"></script>
 </body>
 </html>

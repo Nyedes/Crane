@@ -10,7 +10,7 @@ if [ -f "$OUTPUT_ZIP" ]; then
 fi
 
 # Package necessary files
-zip -r "$OUTPUT_ZIP" manifest.json background.js content.js popup.html popup.js options.html options.js icons/ README.md
+zip -r "$OUTPUT_ZIP" manifest.json background.js content.js popup.html popup.js options.html options.js tailwind-built.css icons/ README.md
 
 echo "--------------------------------------------------------"
 echo "🎉 Extension packaged successfully into: $OUTPUT_ZIP"
