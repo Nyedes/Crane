@@ -1,11 +1,12 @@
 {
     "manifest_version": 3,
-    "name": "Skyscraper City Forum Tab Opener",
-    "version": "1.0",
-    "description": "Automatically opens unread subforum threads from Skyscraper City Forum in new background tabs.",
+    "name": "Crane",
+    "version": "2.5.0",
+    "description": "Automatically opens unread subforums and threads from Skyscraper City Forum in hierarchy order.",
     "permissions": ["tabs", "storage", "scripting"],
     "host_permissions": ["https://www.skyscrapercity.com/*"],
     "action": {
+        "default_title": "Crane",
         "default_popup": "popup.html",
         "default_icon": "icons/icon.svg"
     },

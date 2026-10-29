@@ -1,4 +1,13 @@
 <svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="128" height="128" rx="20" fill="#4285F4"/>
-<text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="80" font-weight="bold">S</text>
+  <rect width="128" height="128" rx="28" fill="#9E3D00"/>
+  <!-- Tower Crane Mast & Base -->
+  <path d="M24 106H64" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+  <path d="M40 106V24L48 16L56 24V106" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M40 48H56M40 68H56M40 88H56" stroke="#FFDCC5" stroke-width="4" stroke-linecap="round"/>
+  <!-- Crane Jib & Counter-Jib -->
+  <path d="M20 34H106" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+  <path d="M48 16L26 34M48 16L88 34" stroke="#FC8F34" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Hook & Hoist Line -->
+  <path d="M92 34V66" stroke="#FFDCC5" stroke-width="5" stroke-linecap="round"/>
+  <rect x="80" y="66" width="24" height="16" rx="4" fill="#FC8F34" stroke="#FFFFFF" stroke-width="3"/>
 </svg>

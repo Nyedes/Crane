@@ -478,17 +478,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const totalNested = nestedSubUrls.length + nestedThreadUrls.length;
 
                 if (totalNested > 0) {
+                    const chevronSvg = isExpanded
+                        ? `<svg class="w-3 h-3 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`
+                        : `<svg class="w-3 h-3 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
                     nestedBadgeHtml = `
                         <button type="button" class="card-btn-toggle-nested px-1.5 py-0.5 rounded bg-secondary-container/20 hover:bg-secondary-container/35 text-primary text-[10px] font-label-caps font-bold flex items-center gap-0.5 shrink-0 transition-colors" data-expand-key="${escapeHtml(expandKey)}" title="Expand nested rules for this subforum">
                             <span>↳ ${totalNested}</span>
-                            <span class="material-symbols-outlined text-[12px] pointer-events-none">${isExpanded ? 'expand_less' : 'expand_more'}</span>
+                            ${chevronSvg}
                         </button>
                     `;
 
                     if (isExpanded) {
                         const subRows = nestedSubUrls.map((subU, sIdx) => `
                             <div class="flex items-center gap-1.5 text-[11px] text-on-surface-variant py-0.5 pl-2 border-l-2 border-secondary-container/50">
-                                <span class="material-symbols-outlined text-[12px] text-secondary">folder</span>
+                                <svg class="w-3 h-3 text-secondary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                                 <span class="font-label-caps text-[10px] text-primary font-bold">#${sIdx + 1}</span>
                                 <span class="truncate" title="${escapeHtml(subU)}">${escapeHtml(getFriendlyUrlTitle(subU))}</span>
                             </div>
@@ -496,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const threadRows = nestedThreadUrls.map((thU, tIdx) => `
                             <div class="flex items-center gap-1.5 text-[11px] text-on-surface-variant py-0.5 pl-2 border-l-2 border-primary/40">
-                                <span class="material-symbols-outlined text-[12px] text-primary">chat_bubble</span>
+                                <svg class="w-3 h-3 text-primary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                                 <span class="font-label-caps text-[10px] text-primary font-bold">#${tIdx + 1}</span>
                                 <span class="truncate" title="${escapeHtml(thU)}">${escapeHtml(getFriendlyUrlTitle(thU))}</span>
                             </div>
@@ -539,7 +542,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const ruleKey = normalizeUrl(rule.pageUrl);
         const urls = (type === 'subforum' ? rule.subforumUrls : rule.threadUrls) || [];
         const typeLabel = type === 'subforum' ? 'Subforum Rule' : 'Thread Rule';
-        const typeIcon = type === 'subforum' ? 'folder' : 'chat_bubble';
+        const typeIconSvg = type === 'subforum'
+            ? `<svg class="w-5 h-5 text-primary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`
+            : `<svg class="w-5 h-5 text-primary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
         const typeBadgeColor = type === 'subforum'
             ? 'bg-secondary-container/15 text-on-secondary-fixed-variant'
             : 'bg-primary-container/10 text-primary';
@@ -556,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="flex justify-between items-start border-b border-outline-variant/20 pb-sm">
                 <div class="space-y-1 overflow-hidden flex-1 pr-sm">
                     <div class="flex items-center gap-sm">
-                        <span class="material-symbols-outlined text-primary text-md" style="font-variation-settings: 'FILL' 1;">${typeIcon}</span>
+                        ${typeIconSvg}
                         <a class="font-headline-md text-headline-md text-primary hover:underline truncate block" href="${escapedPageUrl}" target="_blank" title="${escapedPageUrl}">${friendlyName}</a>
                     </div>
                     <div class="flex flex-wrap items-center gap-sm">
@@ -565,9 +570,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="flex gap-xs">
-                    <button type="button" class="btn-visit-page p-2 hover:bg-surface-container-high rounded-xl text-outline transition-colors" data-url="${escapedPageUrl}" title="Open Page"><span class="material-symbols-outlined text-sm pointer-events-none">open_in_new</span></button>
-                    <button type="button" class="btn-edit-form p-2 hover:bg-surface-container-high rounded-xl text-outline transition-colors" title="Load in Form"><span class="material-symbols-outlined text-sm pointer-events-none">edit</span></button>
-                    <button type="button" class="btn-delete-rule p-2 hover:bg-error-container hover:text-error rounded-xl text-outline transition-colors" title="Delete Rule"><span class="material-symbols-outlined text-sm pointer-events-none">delete</span></button>
+                    <button type="button" class="btn-visit-page p-2 hover:bg-surface-container-high rounded-xl text-outline transition-colors" data-url="${escapedPageUrl}" title="Open Page">
+                        <svg class="w-4 h-4 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </button>
+                    <button type="button" class="btn-edit-form p-2 hover:bg-surface-container-high rounded-xl text-outline transition-colors" title="Load in Form">
+                        <svg class="w-4 h-4 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button type="button" class="btn-delete-rule p-2 hover:bg-error-container hover:text-error rounded-xl text-outline transition-colors" title="Delete Rule">
+                        <svg class="w-4 h-4 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
                 </div>
             </div>
             <div class="space-y-sm flex-grow">
@@ -650,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderEmptyDashboardState(hasSearchQuery) {
         dashboardGrid.innerHTML = `
             <div class="empty-state bg-surface-container-lowest rounded-2xl border border-outline-variant/20 p-xl text-center space-y-sm" style="grid-column: 1 / -1;">
-                <span class="material-symbols-outlined text-4xl text-outline">search_off</span>
+                <svg class="w-10 h-10 text-outline mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <h3 class="font-headline-md text-headline-md text-on-surface">No rules match your filters</h3>
                 <p class="text-body-md text-on-surface-variant">${hasSearchQuery ? 'Try adjusting your search query.' : 'Click "Create New Rule" to get started!'}</p>
             </div>
@@ -1173,7 +1184,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <label class="flex items-center gap-3 p-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl hover:bg-secondary-container/5 cursor-pointer transition-all group border-l-4 border-l-transparent hover:border-l-primary">
                             <input type="checkbox" class="builder-item-checkbox w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" value="${escapedUrl}" data-title="${escapedTitle}" ${isChecked}>
                             <span class="text-body-md text-on-surface flex-grow truncate font-medium" title="${escapedTitle}">${escapedTitle}</span>
-                            <span class="material-symbols-outlined opacity-0 group-hover:opacity-100 text-sm text-outline">drag_indicator</span>
                         </label>
                     `;
                 }).join('')}

@@ -18,6 +18,9 @@ function normalizeUrl(url) {
     }
 }
 
+const CHECK_SVG = `<svg class="w-4 h-4 text-green-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+const ERROR_SVG = `<svg class="w-4 h-4 text-red-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+
 document.addEventListener('DOMContentLoaded', () => {
     const openUnreadButton = document.getElementById('openLinksBtn');
     const expandAllButton = document.getElementById('expandAllBtn');
@@ -53,24 +56,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const label = document.createElement('span');
             const progressWrap = document.createElement('div');
             const progressBar = document.createElement('div');
-            const icon = document.createElement('span');
+            const iconWrap = document.createElement('span');
 
-            progressWrap.className = 'flex-grow h-[2px] bg-outline-variant/30 ml-sm rounded-full overflow-hidden hidden';
+            progressWrap.className = 'flex-grow h-1 bg-outline-variant/30 ml-2 rounded-full overflow-hidden hidden min-w-[40px]';
             progressBar.className = 'h-full bg-primary';
             progressBar.style.width = '0%';
             progressBar.style.transition = 'width 0.25s ease';
             progressWrap.appendChild(progressBar);
 
-            icon.className = 'material-symbols-outlined text-sm ml-auto hidden';
-            icon.style.fontVariationSettings = "'FILL' 1";
+            iconWrap.className = 'ml-auto hidden';
 
             row.appendChild(dot);
             row.appendChild(label);
             row.appendChild(progressWrap);
-            row.appendChild(icon);
+            row.appendChild(iconWrap);
 
             pipelineDiv.appendChild(row);
-            stepDomRefs.set(step.id, { row, dot, label, progressWrap, progressBar, icon });
+            stepDomRefs.set(step.id, { row, dot, label, progressWrap, progressBar, iconWrap });
             updateStepDOM(step);
         });
     }
@@ -83,21 +85,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const refs = stepDomRefs.get(step.id);
         if (!refs) return;
 
-        const { row, dot, label, progressWrap, progressBar, icon } = refs;
+        const { row, dot, label, progressWrap, progressBar, iconWrap } = refs;
         const detailSuffix = step.detail ? ` (${step.detail})` : '';
 
         if (step.status === 'done') {
-            row.className = 'flex items-center gap-sm pl-md group opacity-60';
+            row.className = 'flex items-center gap-2.5 pl-3 group opacity-75';
             dot.className = 'status-dot bg-green-600';
-            label.className = 'font-body-md text-on-surface-variant line-through';
+            label.className = 'text-[12.5px] text-on-surface-variant line-through truncate';
             label.textContent = `${step.name}${detailSuffix}`;
             progressWrap.classList.add('hidden');
-            icon.className = 'material-symbols-outlined text-sm text-green-600 ml-auto';
-            icon.textContent = 'check_circle';
+            iconWrap.className = 'ml-auto flex items-center';
+            iconWrap.innerHTML = CHECK_SVG;
         } else if (step.status === 'active') {
-            row.className = 'flex items-center gap-sm pl-md bg-secondary-container/10 py-xs -ml-[13px] border-l-4 border-primary rounded-r-md';
-            dot.className = 'status-dot active bg-primary ml-2';
-            label.className = 'font-body-md font-semibold text-primary truncate';
+            row.className = 'flex items-center gap-2.5 pl-3 pr-2 bg-secondary-container/15 py-1 -ml-[2px] border-l-2 border-primary rounded-r-md';
+            dot.className = 'status-dot active bg-primary';
+            label.className = 'text-[12.5px] font-semibold text-primary truncate';
             label.textContent = `${step.name}${detailSuffix}`;
 
             if (step.progress !== undefined) {
@@ -107,27 +109,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 progressWrap.classList.add('hidden');
                 progressBar.style.width = '0%';
             }
-            icon.className = 'material-symbols-outlined text-sm ml-auto hidden';
-            icon.textContent = '';
+            iconWrap.className = 'ml-auto hidden';
+            iconWrap.innerHTML = '';
         } else if (step.status === 'error') {
-            row.className = 'flex items-center gap-sm pl-md group';
+            row.className = 'flex items-center gap-2.5 pl-3 group';
             dot.className = 'status-dot bg-red-600';
-            label.className = 'font-body-md text-red-600 font-semibold truncate flex-grow';
+            label.className = 'text-[12.5px] text-red-600 font-semibold truncate flex-grow';
             label.textContent = step.detail ? `${step.name}: ${step.detail}` : step.name;
             label.title = step.detail || '';
             progressWrap.classList.add('hidden');
-            icon.className = 'material-symbols-outlined text-sm text-red-600 ml-auto';
-            icon.textContent = 'error';
+            iconWrap.className = 'ml-auto flex items-center';
+            iconWrap.innerHTML = ERROR_SVG;
         } else {
             // Pending
-            row.className = 'flex items-center gap-sm pl-md opacity-40';
+            row.className = 'flex items-center gap-2.5 pl-3 opacity-45';
             dot.className = 'status-dot bg-on-surface-variant';
-            label.className = 'font-body-md text-on-surface-variant';
+            label.className = 'text-[12.5px] text-on-surface-variant truncate';
             label.textContent = `${step.name}${detailSuffix}`;
             progressWrap.classList.add('hidden');
             progressBar.style.width = '0%';
-            icon.className = 'material-symbols-outlined text-sm ml-auto hidden';
-            icon.textContent = '';
+            iconWrap.className = 'ml-auto hidden';
+            iconWrap.innerHTML = '';
         }
     }
 
