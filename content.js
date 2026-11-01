@@ -8,9 +8,40 @@ if (!window.__skyscraperContentScriptLoaded) {
 
     let isScanning = false;
     let lastScanTimestamp = 0;
-    const SCAN_COOLDOWN_MS = 1000;
-    const EXPAND_FETCH_DELAY_MS = 300;
+    const SCAN_COOLDOWN_MS = 800;
+
+    // Rate-limit-safe expansion constants
+    const EXPAND_FETCH_CONCURRENCY = 2;
+    const MIN_FETCH_INTERVAL_MS = 160;
+    const MAX_FETCH_RETRIES = 3;
+    const BASE_BACKOFF_MS = 1500;
     const MAX_EXPAND_DEPTH = 3;
+
+    let nextAllowedFetchTime = 0;
+    let fetchRateLimitPauseUntil = 0;
+
+    /**
+     * Token-bucket style pacer for subforum expansion fetches.
+     */
+    async function acquireFetchSlot() {
+        while (true) {
+            const now = Date.now();
+            if (now < fetchRateLimitPauseUntil) {
+                await delay(fetchRateLimitPauseUntil - now);
+                continue;
+            }
+            const scheduledTime = Math.max(now, nextAllowedFetchTime);
+            nextAllowedFetchTime = scheduledTime + MIN_FETCH_INTERVAL_MS;
+            const waitMs = scheduledTime - now;
+            if (waitMs > 0) {
+                await delay(waitMs);
+            }
+            if (Date.now() < fetchRateLimitPauseUntil) {
+                continue;
+            }
+            return;
+        }
+    }
 
     // Helper to normalize URLs for reliable comparisons (stripping trailing slashes, pagination, post IDs, hashes, etc.)
     function normalizeUrl(url) {
@@ -75,6 +106,28 @@ if (!window.__skyscraperContentScriptLoaded) {
         if (itemNorm === customNorm) return true;
         const cleanCustom = customNorm.replace(/^\/+/, '');
         return Boolean(cleanCustom) && itemNorm.endsWith('/' + cleanCustom);
+    }
+
+    /**
+     * Maps over `items` concurrently with at most `concurrency` active promises,
+     * returning the results in the exact original index order of `items`.
+     */
+    async function mapWithConcurrency(items, concurrency, mapperFn) {
+        const total = items.length;
+        if (total === 0) return [];
+        const results = new Array(total);
+        let nextIndex = 0;
+        const workerCount = Math.min(concurrency, total);
+
+        const workers = Array.from({ length: workerCount }, async () => {
+            while (nextIndex < total) {
+                const idx = nextIndex++;
+                results[idx] = await mapperFn(items[idx], idx);
+            }
+        });
+
+        await Promise.all(workers);
+        return results;
     }
 
     // --- Subforum Page Logic (supports both live document and fetched DOMParser documents) ---
@@ -275,19 +328,40 @@ if (!window.__skyscraperContentScriptLoaded) {
     }
 
     /**
-     * Fetches a subforum page and parses it into a DOM Document.
+     * Fetches a subforum page and parses it into a DOM Document,
+     * with token-bucket pacing and automatic 429/503 exponential backoff.
      */
     async function fetchSubforumDocument(url) {
-        const response = await fetch(url, {
-            method: 'GET',
-            credentials: 'same-origin'
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status} when fetching ${url}`);
+        for (let attempt = 0; attempt <= MAX_FETCH_RETRIES; attempt++) {
+            await acquireFetchSlot();
+
+            const response = await fetch(url, {
+                method: 'GET',
+                credentials: 'same-origin'
+            });
+
+            if (response.status === 429 || response.status === 503) {
+                const retryAfter = response.headers.get('Retry-After');
+                let backoffMs = BASE_BACKOFF_MS * Math.pow(2, attempt);
+                if (retryAfter) {
+                    const sec = parseInt(retryAfter, 10);
+                    if (!isNaN(sec) && sec > 0) backoffMs = Math.min(sec * 1000, 15000);
+                }
+                const jitter = Math.floor(Math.random() * 300);
+                fetchRateLimitPauseUntil = Math.max(fetchRateLimitPauseUntil, Date.now() + backoffMs + jitter);
+                console.warn(`Rate limited (${response.status}) fetching ${url}. Retrying in ${backoffMs + jitter}ms...`);
+                if (attempt < MAX_FETCH_RETRIES) continue;
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status} when fetching ${url}`);
+            }
+
+            const htmlText = await response.text();
+            const parser = new DOMParser();
+            return parser.parseFromString(htmlText, 'text/html');
         }
-        const htmlText = await response.text();
-        const parser = new DOMParser();
-        return parser.parseFromString(htmlText, 'text/html');
+        throw new Error(`Max retries exceeded fetching ${url}`);
     }
 
     /**
@@ -306,6 +380,9 @@ if (!window.__skyscraperContentScriptLoaded) {
             let finalUrlsToOpen = [];
             let finalSubforumUrlsToMarkAsRead = [];
             let finalThreadUrlsToMarkAsRead = [];
+            // Subforums where all ignored threads are cleared in 1 single POST /mark-read request
+            const bulkMarkReadSubforumNorms = new Set();
+            let needsUnreadRedirectGrace = false;
             let csrfToken = getCsrfTokenFromDoc(document);
             let expandedSubforumsCount = 0;
 
@@ -329,8 +406,10 @@ if (!window.__skyscraperContentScriptLoaded) {
 
             if (!expand) {
                 // --- Standard Single-Page Scan ---
+                let openedSubforumsOnPage = 0;
                 if (hasSubforums) {
                     const subforumResult = processSubforumsFromDoc(document, window.location.href, subforumRules);
+                    openedSubforumsOnPage = subforumResult.urlsToOpen.length;
                     finalUrlsToOpen.push(...subforumResult.urlsToOpen.map(item => item.url));
                     finalSubforumUrlsToMarkAsRead.push(...subforumResult.urlsToMarkAsRead);
                 }
@@ -338,7 +417,25 @@ if (!window.__skyscraperContentScriptLoaded) {
                 if (hasThreads) {
                     const threadResult = processThreadsFromDoc(document, window.location.href, threadRules);
                     finalUrlsToOpen.push(...threadResult.urlsToOpen.map(item => item.url));
-                    finalThreadUrlsToMarkAsRead.push(...threadResult.urlsToMarkAsRead);
+
+                    // Request-reduction optimization:
+                    // If no unexpanded child subforums on this page are waiting to be opened manually,
+                    // and there are multiple ignored threads, 1 single POST /forums/.../mark-read
+                    // clears all ignored threads at once instead of N separate thread GET requests!
+                    const normCurrentForum = normalizeUrl(window.location.href);
+                    if (
+                        openedSubforumsOnPage === 0 &&
+                        threadResult.urlsToMarkAsRead.length > 1 &&
+                        normCurrentForum.includes('/forums/')
+                    ) {
+                        finalSubforumUrlsToMarkAsRead.push(normCurrentForum);
+                        bulkMarkReadSubforumNorms.add(normCurrentForum);
+                        if (threadResult.urlsToOpen.length > 0) {
+                            needsUnreadRedirectGrace = true;
+                        }
+                    } else {
+                        finalThreadUrlsToMarkAsRead.push(...threadResult.urlsToMarkAsRead);
+                    }
                 }
             } else {
                 // --- Hierarchical Deep Expand Scan ("Expand & Open All") ---
@@ -348,48 +445,51 @@ if (!window.__skyscraperContentScriptLoaded) {
                     const rootSubResult = processSubforumsFromDoc(document, window.location.href, subforumRules);
                     finalSubforumUrlsToMarkAsRead.push(...rootSubResult.urlsToMarkAsRead);
 
-                    const rootQueue = rootSubResult.urlsToOpen;
+                    const rootQueue = rootSubResult.urlsToOpen.filter(item => {
+                        const norm = normalizeUrl(item.url);
+                        if (!norm || visitedSubforumNorms.has(norm)) return false;
+                        visitedSubforumNorms.add(norm);
+                        return true;
+                    });
                     const rootScheduledNorms = new Set(rootQueue.map(item => normalizeUrl(item.url)));
 
-                    // Track total subforums to expand for progress reporting
                     let totalToExpand = rootQueue.length;
-                    let currentExpandIndex = 0;
+                    let completedExpands = 0;
 
-                    async function expandSubforumNode(subforumItem, depth, parentRuleContext = null) {
+                    /**
+                     * Expands a single subforum node and returns its ordered subtree:
+                     * { urlsToOpen, subforumUrlsToMarkAsRead, threadUrlsToMarkAsRead }
+                     */
+                    async function expandSubforumNodeToTree(subforumItem, depth, parentRuleContext = null) {
                         const normUrl = normalizeUrl(subforumItem.url);
-                        if (!normUrl || visitedSubforumNorms.has(normUrl) || depth > MAX_EXPAND_DEPTH) {
-                            return;
-                        }
-                        visitedSubforumNorms.add(normUrl);
+                        const localOpen = [subforumItem.url];
+                        const localSubforumsToMark = [];
+                        const localThreadsToMark = [];
 
-                        // 1. Place the subforum tab itself first in the hierarchy
-                        finalUrlsToOpen.push(subforumItem.url);
-                        currentExpandIndex++;
                         expandedSubforumsCount++;
 
-                        if (totalToExpand < currentExpandIndex) {
-                            totalToExpand = currentExpandIndex;
-                        }
-
-                        browser.runtime.sendMessage({
-                            action: 'expandProgress',
-                            pageUrl: window.location.href,
-                            current: currentExpandIndex,
-                            total: totalToExpand,
-                            currentTitle: subforumItem.title || ''
-                        }).catch(() => {});
-
-                        // Polite pacing delay between subforum page fetches
-                        if (expandedSubforumsCount > 1) {
-                            await delay(EXPAND_FETCH_DELAY_MS);
-                        }
-
-                        let subDoc;
+                        let subDoc = null;
                         try {
                             subDoc = await fetchSubforumDocument(subforumItem.url);
                         } catch (fetchErr) {
                             console.warn(`Failed to fetch subforum during expand: ${subforumItem.url}`, fetchErr);
-                            return;
+                        } finally {
+                            completedExpands++;
+                            browser.runtime.sendMessage({
+                                action: 'expandProgress',
+                                pageUrl: window.location.href,
+                                current: Math.min(completedExpands, totalToExpand),
+                                total: Math.max(completedExpands, totalToExpand),
+                                currentTitle: subforumItem.title || ''
+                            }).catch(() => {});
+                        }
+
+                        if (!subDoc) {
+                            return {
+                                urlsToOpen: localOpen,
+                                subforumUrlsToMarkAsRead: localSubforumsToMark,
+                                threadUrlsToMarkAsRead: localThreadsToMark
+                            };
                         }
 
                         if (!csrfToken) {
@@ -399,16 +499,21 @@ if (!window.__skyscraperContentScriptLoaded) {
                         const subHasThreads = Boolean(subDoc.querySelector('.p-body-pageContent .structItemContainer-group.js-threadList'));
                         const subHasSubforums = Boolean(subDoc.querySelector('.p-body-pageContent .node-list'));
 
-                        // 2. Immediately follow the subforum tab with its own unread threads (in its saved Thread Rule order)
+                        let watchedThreadsCount = 0;
+                        let pendingIgnoredThreads = [];
+
+                        // 1. Immediately follow the subforum tab with its own unread threads (in its saved Thread Rule order)
                         if (subHasThreads) {
                             const subThreadResult = processThreadsFromDoc(subDoc, subforumItem.url, threadRules);
-                            finalUrlsToOpen.push(...subThreadResult.urlsToOpen.map(t => t.url));
-                            finalThreadUrlsToMarkAsRead.push(...subThreadResult.urlsToMarkAsRead);
+                            watchedThreadsCount = subThreadResult.urlsToOpen.length;
+                            localOpen.push(...subThreadResult.urlsToOpen.map(t => t.url));
+                            pendingIgnoredThreads = subThreadResult.urlsToMarkAsRead;
                         }
 
-                        // 3. If this subforum has nested child subforums, expand them in hierarchy order
+                        // 2. If this subforum has nested child subforums, expand them and merge in order
+                        let nestedToExpandNow = [];
+                        let hasDeferredRootScheduledChildren = false;
                         if (subHasSubforums && depth < MAX_EXPAND_DEPTH) {
-                            // Check if parent rule already curated specific children of this subforum
                             let inheritedFilter = null;
                             if (parentRuleContext && parentRuleContext.matchingRule && parentRuleContext.childToParentMap) {
                                 const childNormsOfThisParent = [];
@@ -432,30 +537,73 @@ if (!window.__skyscraperContentScriptLoaded) {
                                 subforumRules,
                                 inheritedFilter
                             );
-                            finalSubforumUrlsToMarkAsRead.push(...nestedSubResult.urlsToMarkAsRead);
+                            localSubforumsToMark.push(...nestedSubResult.urlsToMarkAsRead);
 
-                            // Filter out child subforums that are already scheduled at their own explicit slot in the root rule
-                            const nestedToExpandNow = nestedSubResult.urlsToOpen.filter(childItem => {
+                            nestedToExpandNow = nestedSubResult.urlsToOpen.filter(childItem => {
                                 const normChild = normalizeUrl(childItem.url);
-                                if (visitedSubforumNorms.has(normChild)) return false;
+                                if (!normChild) return false;
                                 if (depth === 1 && rootScheduledNorms.has(normChild)) {
-                                    // Will be expanded at its exact position in rootQueue
+                                    hasDeferredRootScheduledChildren = true;
                                     return false;
                                 }
+                                if (visitedSubforumNorms.has(normChild)) return false;
+                                visitedSubforumNorms.add(normChild);
                                 return true;
                             });
 
-                            totalToExpand += nestedToExpandNow.length;
-
-                            for (const childItem of nestedToExpandNow) {
-                                await expandSubforumNode(childItem, depth + 1, nestedSubResult);
+                            if (nestedToExpandNow.length > 0) {
+                                totalToExpand += nestedToExpandNow.length;
+                                const childTrees = await mapWithConcurrency(
+                                    nestedToExpandNow,
+                                    EXPAND_FETCH_CONCURRENCY,
+                                    childItem => expandSubforumNodeToTree(childItem, depth + 1, nestedSubResult)
+                                );
+                                childTrees.forEach(tree => {
+                                    localOpen.push(...tree.urlsToOpen);
+                                    localSubforumsToMark.push(...tree.subforumUrlsToMarkAsRead);
+                                    localThreadsToMark.push(...tree.threadUrlsToMarkAsRead);
+                                });
                             }
                         }
+
+                        // Request-reduction optimization:
+                        // Since all watched threads (and any child subforums) of this subforum are already being opened,
+                        // if this subforum has > 1 ignored unread threads and no unexpanded child subforums,
+                        // replace N individual thread GET requests with 1 single POST /forums/.../mark-read!
+                        if (
+                            !hasDeferredRootScheduledChildren &&
+                            nestedToExpandNow.length === 0 &&
+                            pendingIgnoredThreads.length > 1 &&
+                            normUrl.includes('/forums/')
+                        ) {
+                            localSubforumsToMark.push(normUrl);
+                            bulkMarkReadSubforumNorms.add(normUrl);
+                            if (watchedThreadsCount > 0) {
+                                needsUnreadRedirectGrace = true;
+                            }
+                        } else {
+                            localThreadsToMark.push(...pendingIgnoredThreads);
+                        }
+
+                        return {
+                            urlsToOpen: localOpen,
+                            subforumUrlsToMarkAsRead: localSubforumsToMark,
+                            threadUrlsToMarkAsRead: localThreadsToMark
+                        };
                     }
 
-                    for (const subforumItem of rootQueue) {
-                        await expandSubforumNode(subforumItem, 1, rootSubResult);
-                    }
+                    // Expand root subforums with rate-limited concurrency while preserving exact rootQueue order!
+                    const rootTrees = await mapWithConcurrency(
+                        rootQueue,
+                        EXPAND_FETCH_CONCURRENCY,
+                        subforumItem => expandSubforumNodeToTree(subforumItem, 1, rootSubResult)
+                    );
+
+                    rootTrees.forEach(tree => {
+                        finalUrlsToOpen.push(...tree.urlsToOpen);
+                        finalSubforumUrlsToMarkAsRead.push(...tree.subforumUrlsToMarkAsRead);
+                        finalThreadUrlsToMarkAsRead.push(...tree.threadUrlsToMarkAsRead);
+                    });
 
                     // Clear expanding state in background before handing off to processLinks
                     browser.runtime.sendMessage({
@@ -477,9 +625,11 @@ if (!window.__skyscraperContentScriptLoaded) {
             finalUrlsToOpen = deduplicateUrlStrings(finalUrlsToOpen);
             const openedNormSet = new Set(finalUrlsToOpen.map(normalizeUrl));
 
-            // Never mark as read any subforum or thread that is being opened
-            finalSubforumUrlsToMarkAsRead = deduplicateUrlStrings(finalSubforumUrlsToMarkAsRead)
-                .filter(url => !openedNormSet.has(normalizeUrl(url)));
+            // Never mark as read any subforum or thread that is being opened (unless it's a bulk mark-read subforum after its watched threads open)
+            finalSubforumUrlsToMarkAsRead = deduplicateUrlStrings(finalSubforumUrlsToMarkAsRead).filter(url => {
+                const norm = normalizeUrl(url);
+                return !openedNormSet.has(norm) || bulkMarkReadSubforumNorms.has(norm);
+            });
             finalThreadUrlsToMarkAsRead = deduplicateUrlStrings(finalThreadUrlsToMarkAsRead)
                 .filter(url => !openedNormSet.has(normalizeUrl(url)));
 
@@ -495,6 +645,7 @@ if (!window.__skyscraperContentScriptLoaded) {
                     urlsToOpen: finalUrlsToOpen,
                     subforumUrlsToMarkAsRead: finalSubforumUrlsToMarkAsRead,
                     threadUrlsToMarkAsRead: finalThreadUrlsToMarkAsRead,
+                    needsUnreadRedirectGrace,
                     expandedSubforumsCount,
                     csrfToken
                 });
